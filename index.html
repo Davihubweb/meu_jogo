@@ -1,119 +1,443 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description"
-    content="Aventura no Céu - Jogo 2D de avião para navegador onde você desvia de obstáculos e acumula pontos.">
-  <title>Aventura no Céu - Jogo 2D</title>
+  <meta name="description" content="AeroSim Brasil - Simulador de Voo Regional 3D para Navegador inspirado no Cessna 208B Grand Caravan.">
+  <title>AeroSim Brasil - Simulador de Voo Regional 3D</title>
 
-  <!-- Google Fonts -->
+  <!-- Google Fonts para HUD e Interface Profissional -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=Press+Start+2P&display=swap"
-    rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
-  <main class="game-wrapper">
-    <div class="game-container" id="gameContainer">
-      <!-- Canvas do Jogo -->
-      <canvas id="gameCanvas" width="850" height="480"></canvas>
+  <!-- Viewport 3D Principal -->
+  <div id="game-viewport">
+    <canvas id="flightCanvas"></canvas>
 
-      <!-- HUD Superior durante a partida -->
-      <div class="hud" id="hud">
-        <div class="hud-item score-box">
-          <span class="hud-label">PONTOS</span>
-          <span class="hud-value" id="currentScore">0</span>
-        </div>
-        <div class="hud-item highscore-box">
-          <span class="hud-label">RECORDE</span>
-          <span class="hud-value" id="hudHighScore">0</span>
-        </div>
-        <div class="hud-controls">
-          <button id="audioToggleBtn" class="hud-btn" title="Ativar/Desativar Som" aria-label="Som">
-            🔊
-          </button>
+    <!-- TOP BAR DE NAVEGAÇÃO / HUD GERAL -->
+    <header class="app-header" id="appHeader">
+      <div class="logo-group">
+        <span class="logo-icon">✈️</span>
+        <div class="logo-titles">
+          <span class="logo-main">AEROSIM</span>
+          <span class="logo-sub">REGIONAL FLIGHT</span>
         </div>
       </div>
 
-      <!-- Tela Inicial -->
-      <div class="screen-overlay" id="startScreen">
-        <div class="screen-card">
-          <div class="title-badge">✈️ VOO LIVRE</div>
-          <h1 class="game-title">Aventura no Céu</h1>
-          <p class="game-subtitle">Pilote com precisão, desvie das nuvens de tempestade e dos balões para ir o mais
-            longe possível!</p>
+      <div class="header-user-status">
+        <div class="credits-badge" title="Seus Créditos de Piloto">
+          <span class="coin-icon">🪙</span>
+          <span id="userCreditsDisplay">1.250</span>
+          <span class="credits-label">CRÉDITOS</span>
+        </div>
+        <button id="btnHeaderMenu" class="header-btn" title="Menu Principal">
+          <span>☰ MENU</span>
+        </button>
+      </div>
+    </header>
 
-          <div class="instructions-card">
-            <h3>Como Jogar</h3>
-            <div class="controls-guide">
-              <div class="control-key-group">
-                <span class="key-pill">W</span>
-                <span class="key-pill">A</span>
-                <span class="key-pill">S</span>
-                <span class="key-pill">D</span>
-                <span class="key-desc">ou</span>
-                <span class="key-pill">▲</span>
-                <span class="key-pill">◀</span>
-                <span class="key-pill">▼</span>
-                <span class="key-pill">▶</span>
+    <!-- ==============================================
+         1. MENU PRINCIPAL (TELA INICIAL)
+    =============================================== -->
+    <div class="overlay-modal" id="mainMenuModal">
+      <div class="menu-hero-card">
+        <div class="hero-badge">SIMULADOR REGIONAL BRASILEIRO</div>
+        <h1 class="hero-title">AERO FLIGHT SIMULATOR</h1>
+        <p class="hero-desc">Assuma o manche do turboélice regional utilitário <strong>Caravaneer 208-TX</strong> e cumpra rotas aéreas entre cidades e capitais brasileiras com física e navegação de voo.</p>
+
+        <div class="hero-actions">
+          <button id="btnOpenRoutes" class="btn-primary-large">
+            <span class="btn-glow"></span>
+            <span class="btn-icon-large">🗺️</span>
+            <div class="btn-text-block">
+              <span class="btn-title-large">ESCOLHER ROTA</span>
+              <span class="btn-sub-large">Selecione seu voo comercial e ganhe créditos</span>
+            </div>
+            <span class="btn-arrow">➔</span>
+          </button>
+
+          <div class="hero-secondary-buttons">
+            <button id="btnFreeFlight" class="btn-secondary">
+              <span>🛫 Voo Livre na Pista</span>
+            </button>
+            <button id="btnOpenHangar" class="btn-secondary">
+              <span>🛠️ Hangar da Aeronave</span>
+            </button>
+            <button id="btnOpenSettings" class="btn-secondary">
+              <span>⚙️ Configurações & Clima</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="menu-footer-tips">
+          <span>💡 <strong>Dica de Pilotagem:</strong> Use <strong>F1</strong> para câmera interna do cockpit e <strong>F2</strong> para terceira pessoa. Acelere com <strong>W</strong> e puxe o manche (<kbd>▼</kbd>) ao atingir 90 km/h para decolar!</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==============================================
+         2. TELA DE SELEÇÃO DE ROTAS (SISTEMA DE ROTAS)
+    =============================================== -->
+    <div class="overlay-modal hidden" id="routesModal">
+      <div class="routes-container-card">
+        <div class="modal-header">
+          <div class="modal-header-left">
+            <span class="modal-pill">OPERAÇÕES REGIONAIS</span>
+            <h2 class="modal-title">SELECIONE SUA ROTA DE VOO</h2>
+          </div>
+          <button class="modal-close-btn" id="btnCloseRoutes" title="Voltar ao Menu">✕</button>
+        </div>
+
+        <div class="routes-layout">
+          <!-- Lista de Rotas Disponíveis -->
+          <div class="routes-list" id="routesListContainer">
+            <!-- Rotas injetadas via JavaScript -->
+          </div>
+
+          <!-- Detalhes da Rota Selecionada -->
+          <div class="route-details-panel" id="routeDetailsPanel">
+            <div class="route-flight-header">
+              <span class="flight-code-badge" id="detailFlightCode">VOO AZ-2081</span>
+              <div class="route-path-visual">
+                <span class="airport-node" id="detailOriginCode">SBSP</span>
+                <span class="path-arrow-anim">✈ ─ ─ ─ ➔</span>
+                <span class="airport-node dest" id="detailDestCode">SBCT</span>
               </div>
-              <p class="control-text">Use as teclas para mover o avião em todas as direções</p>
             </div>
-          </div>
 
-          <button id="btnPlay" class="primary-btn">
-            <span>JOGAR</span>
-            <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M8 5v14l11-7z" />
-            </svg>
-          </button>
+            <h3 class="route-names-title" id="detailRouteNames">São Paulo → Curitiba</h3>
+
+            <div class="route-specs-grid">
+              <div class="spec-card">
+                <span class="spec-label">DISTÂNCIA</span>
+                <span class="spec-value" id="detailDistance">330 km</span>
+              </div>
+              <div class="spec-card">
+                <span class="spec-label">DURAÇÃO EST.</span>
+                <span class="spec-value" id="detailDuration">1h 15m</span>
+              </div>
+              <div class="spec-card">
+                <span class="spec-label">ALTITUDE REC.</span>
+                <span class="spec-value" id="detailAltitude">8.500 ft</span>
+              </div>
+              <div class="spec-card">
+                <span class="spec-label">COMBUSTÍVEL EST.</span>
+                <span class="spec-value" id="detailFuel">35%</span>
+              </div>
+              <div class="spec-card">
+                <span class="spec-label">DIFICULDADE</span>
+                <span class="spec-value difficulty-easy" id="detailDifficulty">Fácil</span>
+              </div>
+              <div class="spec-card highlight">
+                <span class="spec-label">RECOMPENSA</span>
+                <span class="spec-value reward" id="detailReward">+850 Créditos</span>
+              </div>
+            </div>
+
+            <div class="route-briefing">
+              <strong>Plano de Voo:</strong>
+              <p id="detailBriefingText">Decolagem no Aeroporto de Congonhas com subida inicial para 8.500 pés. Voo de cruzeiro sobre o relevo da Serra do Mar e aproximação final para pouso seguro na pista do Aeroporto Afonso Pena em Curitiba.</p>
+            </div>
+
+            <button id="btnStartSelectedRoute" class="btn-start-flight">
+              <span>INICIAR VOO</span>
+              <span class="btn-arrow">➔</span>
+            </button>
+          </div>
         </div>
       </div>
+    </div>
 
-      <!-- Tela de Game Over -->
-      <div class="screen-overlay hidden" id="gameOverScreen">
-        <div class="screen-card gameover-card">
-          <div class="gameover-header">
-            <span class="gameover-icon">💥</span>
-            <h2 class="gameover-title">Fim de Jogo</h2>
-            <p class="gameover-subtitle">Seu avião colidiu com um obstáculo!</p>
+    <!-- ==============================================
+         3. MODAL DO HANGAR (AERONAVE CARAVANEER 208-TX)
+    =============================================== -->
+    <div class="overlay-modal hidden" id="hangarModal">
+      <div class="hangar-card">
+        <div class="modal-header">
+          <div class="modal-header-left">
+            <span class="modal-pill">HANGAR REGIONAL</span>
+            <h2 class="modal-title">Caravaneer 208-TX Turboprop</h2>
+          </div>
+          <button class="modal-close-btn" id="btnCloseHangar">✕</button>
+        </div>
+
+        <div class="hangar-body">
+          <div class="aircraft-hero-badge">
+            <div class="aircraft-type-tag">MONOMOTOR TURBOÉLICE REGIONAL DE ASA ALTA</div>
+            <div class="aircraft-livery-preview">
+              <span>Pintura: <strong>AeroSim Azul Marinho & Dourado Perolizado</strong></span>
+            </div>
           </div>
 
-          <div class="score-summary">
-            <div class="summary-box">
-              <span class="summary-label">Pontuação Final</span>
-              <span class="summary-number" id="finalScore">0</span>
+          <div class="hangar-specs-table">
+            <div class="hangar-spec-row">
+              <span class="spec-row-name">Motorização</span>
+              <span class="spec-row-val">Turboélice PT6A de 675 SHP</span>
             </div>
-            <div class="summary-box highlight">
-              <span class="summary-label">Melhor Pontuação</span>
-              <span class="summary-number" id="bestScore">0</span>
+            <div class="hangar-spec-row">
+              <span class="spec-row-name">Configuração de Asa</span>
+              <span class="spec-row-val">Asa Alta com montantes estruturais (High-Wing Struts)</span>
+            </div>
+            <div class="hangar-spec-row">
+              <span class="spec-row-name">Hélice Frontal</span>
+              <span class="spec-row-val">4 Pás de velocidade constante com pontas de alta visibilidade</span>
+            </div>
+            <div class="hangar-spec-row">
+              <span class="spec-row-name">Velocidade de Cruzeiro</span>
+              <span class="spec-row-val">185 kt (~340 km/h)</span>
+            </div>
+            <div class="hangar-spec-row">
+              <span class="spec-row-name">Velocidade de Rotação (Vr)</span>
+              <span class="spec-row-val">~85-90 km/h</span>
+            </div>
+            <div class="hangar-spec-row">
+              <span class="spec-row-name">Teto Operacional</span>
+              <span class="spec-row-val">25.000 ft (Cabine Utilitária / Executiva)</span>
+            </div>
+            <div class="hangar-spec-row">
+              <span class="spec-row-name">Trem de Pouso</span>
+              <span class="spec-row-val">Triciclo reforçado com suspensão para operações rurais e urbanas</span>
             </div>
           </div>
 
-          <button id="btnRestart" class="primary-btn restart-btn">
-            <span>JOGAR NOVAMENTE</span>
-            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-              stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="23 4 23 10 17 10"></polyline>
-              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-            </svg>
+          <button id="btnHangarOk" class="btn-primary-medium">
+            <span>VOLTAR AO MENU</span>
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Dicas rápidas abaixo do jogo -->
-    <footer class="game-footer">
-      <p>Pressione <strong>WASD</strong> ou as <strong>Setas do Teclado</strong> para controlar o avião.</p>
-    </footer>
-  </main>
+    <!-- ==============================================
+         4. MODAL DE CONFIGURAÇÕES & CLIMA
+    =============================================== -->
+    <div class="overlay-modal hidden" id="settingsModal">
+      <div class="settings-card">
+        <div class="modal-header">
+          <div class="modal-header-left">
+            <span class="modal-pill">CONFIGURAÇÕES DE SIMULAÇÃO</span>
+            <h2 class="modal-title">AMBIENTE & PREFERÊNCIAS</h2>
+          </div>
+          <button class="modal-close-btn" id="btnCloseSettings">✕</button>
+        </div>
 
+        <div class="settings-body">
+          <div class="setting-group">
+            <label class="setting-title">Condições de Céu & Clima</label>
+            <div class="weather-selector">
+              <button class="weather-btn active" data-weather="clear">
+                ☀️ Céu Limpo
+              </button>
+              <button class="weather-btn" data-weather="scattered">
+                ⛅ Poucas Nuvens
+              </button>
+              <button class="weather-btn" data-weather="overcast">
+                ☁️ Muitas Nuvens
+              </button>
+            </div>
+          </div>
+
+          <div class="setting-group">
+            <label class="setting-title">Áudio da Turbina & Efeitos</label>
+            <div class="audio-switch-row">
+              <span>Sons Sintetizados do Motor Turboélice</span>
+              <button id="btnSoundToggle" class="switch-btn active">ATIVADO 🔊</button>
+            </div>
+          </div>
+
+          <button id="btnSettingsSave" class="btn-primary-medium">
+            <span>APLICAR E FECHAR</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==============================================
+         5. HUD PROFISSIONAL DE VOO EM TEMPO REAL
+    =============================================== -->
+    <div id="hud-overlay" class="hidden">
+      <!-- Painel Superior: Rota Ativa & Distância -->
+      <div class="hud-top-bar">
+        <div class="flight-nav-card">
+          <div class="nav-route-row">
+            <span class="nav-label">DESTINO:</span>
+            <span class="nav-dest-name" id="hudDestName">Curitiba (SBCT)</span>
+          </div>
+          <div class="nav-metrics-row">
+            <div class="nav-metric">
+              <span class="nav-metric-lbl">DISTÂNCIA:</span>
+              <span class="nav-metric-val" id="hudDistanceVal">330</span>
+              <span class="nav-metric-unit">km</span>
+            </div>
+            <div class="nav-metric">
+              <span class="nav-metric-lbl">REC. ALT:</span>
+              <span class="nav-metric-val" id="hudRecAlt">8.500</span>
+              <span class="nav-metric-unit">ft</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bússola / Heading Centrada -->
+        <div class="compass-tape">
+          <div class="compass-marker">▼</div>
+          <div class="compass-numbers" id="hudHeading">090° LESTE</div>
+        </div>
+
+        <!-- Botões Rápidos e Câmera -->
+        <div class="hud-top-controls">
+          <button id="btnCamF1" class="hud-btn-pill" title="Visão Cockpit (F1)">
+            F1 Cockpit
+          </button>
+          <button id="btnCamF2" class="hud-btn-pill active" title="Visão Externa (F2)">
+            F2 3ª Pessoa
+          </button>
+          <button id="btnPauseMenu" class="hud-btn-pill" title="Menu / Pausa">
+            ESC Menu
+          </button>
+        </div>
+      </div>
+
+      <!-- Instrumentos Esquerda: Velocidade & Potência -->
+      <div class="hud-panel left-panel">
+        <div class="gauge-title">POTÊNCIA DO MOTOR</div>
+        <div class="throttle-container">
+          <div class="throttle-bar-bg">
+            <div class="throttle-bar-fill" id="throttleFill" style="height: 0%;"></div>
+          </div>
+          <div class="throttle-value-box">
+            <span class="throttle-val" id="throttleText">0%</span>
+            <span class="throttle-unit">W / S</span>
+          </div>
+        </div>
+
+        <div class="digital-gauge primary">
+          <span class="gauge-label">VELOCIDADE</span>
+          <span class="gauge-number" id="speedText">0</span>
+          <span class="gauge-unit">km/h</span>
+        </div>
+
+        <div class="digital-gauge sub">
+          <span class="gauge-label">COMBUSTÍVEL</span>
+          <div class="fuel-bar-wrap">
+            <div class="fuel-bar-fill" id="fuelBarFill" style="width: 100%;"></div>
+          </div>
+          <span class="fuel-text" id="fuelText">100%</span>
+        </div>
+      </div>
+
+      <!-- Centro: Horizonte Artificial & Status de Voo -->
+      <div class="hud-center">
+        <div class="artificial-horizon">
+          <div class="horizon-ring">
+            <div class="horizon-line" id="horizonLine">
+              <div class="horizon-sky"></div>
+              <div class="horizon-ground"></div>
+            </div>
+            <div class="horizon-crosshair">
+              <span class="cross-wing left"></span>
+              <span class="cross-center"></span>
+              <span class="cross-wing right"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Badge de Orientação de Voo -->
+        <div class="flight-status-badge" id="flightStatus">
+          NA PISTA DE DECOLAGEM - AUMENTE A POTÊNCIA (W)
+        </div>
+      </div>
+
+      <!-- Instrumentos Direita: Altitude & Razão de Subida -->
+      <div class="hud-panel right-panel">
+        <div class="digital-gauge primary">
+          <span class="gauge-label">ALTITUDE (MSL)</span>
+          <span class="gauge-number" id="altitudeFeetText">0</span>
+          <span class="gauge-unit">ft</span>
+          <span class="gauge-sub-info" id="altitudeMetersText">(0 metros)</span>
+        </div>
+
+        <div class="digital-gauge sub">
+          <span class="gauge-label">RAZÃO SUBIDA (VSI)</span>
+          <span class="gauge-number" id="verticalSpeedText">+0.0</span>
+          <span class="gauge-unit">m/s</span>
+        </div>
+      </div>
+
+      <!-- Guia de Teclas Inferior (Discreto) -->
+      <div class="controls-pill-dock" id="controlsDock">
+        <div class="dock-item"><kbd>W</kbd>/<kbd>S</kbd> Potência</div>
+        <div class="dock-item"><kbd>▼</kbd> Subir (Puxar)</div>
+        <div class="dock-item"><kbd>▲</kbd> Descer (Empurrar)</div>
+        <div class="dock-item"><kbd>◀</kbd>/<kbd>▶</kbd> Curva (Inclinar)</div>
+        <div class="dock-item"><kbd>F1</kbd>/<kbd>F2</kbd> Câmera</div>
+        <div class="dock-item"><kbd>R</kbd> Reiniciar</div>
+      </div>
+    </div>
+
+    <!-- ==============================================
+         6. MODAL DE VOO CONCLUÍDO (SUCESSO)
+    =============================================== -->
+    <div class="overlay-modal hidden" id="flightCompletedModal">
+      <div class="success-card">
+        <div class="success-icon-banner">🏆</div>
+        <span class="success-badge">MISSÃO REGIONAL CUMPRIDA</span>
+        <h2 class="success-title">VOO CONCLUÍDO</h2>
+        <p class="success-sub">Excelente pouso! Você pousou em segurança na pista de destino.</p>
+
+        <div class="flight-debrief-box">
+          <div class="debrief-row">
+            <span class="debrief-lbl">Rota Realizada:</span>
+            <span class="debrief-val highlight" id="completedRouteName">São Paulo → Curitiba</span>
+          </div>
+          <div class="debrief-row">
+            <span class="debrief-lbl">Tempo de Voo:</span>
+            <span class="debrief-val" id="completedFlightTime">02:45</span>
+          </div>
+          <div class="debrief-row">
+            <span class="debrief-lbl">Recompensa Recebida:</span>
+            <span class="debrief-val reward" id="completedRewardText">+850 Créditos</span>
+          </div>
+          <div class="debrief-row unlocked-row" id="unlockedNextRouteRow">
+            <span class="debrief-lbl">Desbloqueio:</span>
+            <span class="debrief-val unlocked" id="unlockedRouteName">Nova Rota Desbloqueada!</span>
+          </div>
+        </div>
+
+        <button id="btnCompletedContinue" class="btn-primary-large">
+          <span>CONTINUAR PARA AS ROTAS</span>
+          <span class="btn-arrow">➔</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ==============================================
+         7. MODAL DE VOO FALHOU (SEM VIOLÊNCIA)
+    =============================================== -->
+    <div class="overlay-modal hidden" id="flightFailedModal">
+      <div class="failed-card">
+        <div class="failed-icon-banner">⚠️</div>
+        <span class="failed-badge">OPERAÇÃO INTERROMPIDA</span>
+        <h2 class="failed-title">VOO FALHOU</h2>
+        <p class="failed-sub" id="failedReasonText">Aeronave perdeu a sustentação ou tocou o solo fora das condições de pouso.</p>
+
+        <div class="failed-actions">
+          <button id="btnRetryFlight" class="btn-primary-medium retry">
+            <span>🔄 TENTAR NOVAMENTE</span>
+          </button>
+          <button id="btnBackToRoutesFailed" class="btn-secondary">
+            <span>🗺️ VOLTAR ÀS ROTAS</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Three.js Local Offline -->
+  <script src="three.min.js"></script>
+  <!-- Motor de Voo, Rotas e Lógica -->
   <script src="game.js"></script>
 </body>
-
 </html>
