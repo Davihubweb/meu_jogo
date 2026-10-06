@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="Aventura no Céu - Jogo 2D de avião para navegador onde você desvia de obstáculos e acumula pontos.">
+  <title>Aventura no Céu - Jogo 2D</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=Press+Start+2P&display=swap"
+    rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <main class="game-wrapper">
+    <div class="game-container" id="gameContainer">
+      <!-- Canvas do Jogo -->
+      <canvas id="gameCanvas" width="850" height="480"></canvas>
+
+      <!-- HUD Superior durante a partida -->
+      <div class="hud" id="hud">
+        <div class="hud-item score-box">
+          <span class="hud-label">PONTOS</span>
+          <span class="hud-value" id="currentScore">0</span>
+        </div>
+        <div class="hud-item highscore-box">
+          <span class="hud-label">RECORDE</span>
+          <span class="hud-value" id="hudHighScore">0</span>
+        </div>
+        <div class="hud-controls">
+          <button id="audioToggleBtn" class="hud-btn" title="Ativar/Desativar Som" aria-label="Som">
+            🔊
+          </button>
+        </div>
+      </div>
+
+      <!-- Tela Inicial -->
+      <div class="screen-overlay" id="startScreen">
+        <div class="screen-card">
+          <div class="title-badge">✈️ VOO LIVRE</div>
+          <h1 class="game-title">Aventura no Céu</h1>
+          <p class="game-subtitle">Pilote com precisão, desvie das nuvens de tempestade e dos balões para ir o mais
+            longe possível!</p>
+
+          <div class="instructions-card">
+            <h3>Como Jogar</h3>
+            <div class="controls-guide">
+              <div class="control-key-group">
+                <span class="key-pill">W</span>
+                <span class="key-pill">A</span>
+                <span class="key-pill">S</span>
+                <span class="key-pill">D</span>
+                <span class="key-desc">ou</span>
+                <span class="key-pill">▲</span>
+                <span class="key-pill">◀</span>
+                <span class="key-pill">▼</span>
+                <span class="key-pill">▶</span>
+              </div>
+              <p class="control-text">Use as teclas para mover o avião em todas as direções</p>
+            </div>
+          </div>
+
+          <button id="btnPlay" class="primary-btn">
+            <span>JOGAR</span>
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Tela de Game Over -->
+      <div class="screen-overlay hidden" id="gameOverScreen">
+        <div class="screen-card gameover-card">
+          <div class="gameover-header">
+            <span class="gameover-icon">💥</span>
+            <h2 class="gameover-title">Fim de Jogo</h2>
+            <p class="gameover-subtitle">Seu avião colidiu com um obstáculo!</p>
+          </div>
+
+          <div class="score-summary">
+            <div class="summary-box">
+              <span class="summary-label">Pontuação Final</span>
+              <span class="summary-number" id="finalScore">0</span>
+            </div>
+            <div class="summary-box highlight">
+              <span class="summary-label">Melhor Pontuação</span>
+              <span class="summary-number" id="bestScore">0</span>
+            </div>
+          </div>
+
+          <button id="btnRestart" class="primary-btn restart-btn">
+            <span>JOGAR NOVAMENTE</span>
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dicas rápidas abaixo do jogo -->
+    <footer class="game-footer">
+      <p>Pressione <strong>WASD</strong> ou as <strong>Setas do Teclado</strong> para controlar o avião.</p>
+    </footer>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+
+</html>
